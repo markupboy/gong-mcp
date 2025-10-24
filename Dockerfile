@@ -1,18 +1,18 @@
-FROM node:18-alpine
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy dependency files
+COPY requirements.txt pyproject.toml ./
 
 # Install dependencies
-RUN npm install 2>&1
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
-COPY . .
+COPY src/ ./src/
 
-# Build TypeScript code
-RUN npm run build 2>&1
+# Install the package
+RUN pip install --no-cache-dir -e .
 
 # Start the server
-CMD ["sh", "-c", "node dist/index.js 2>&1"] 
+CMD ["python", "-m", "gong_mcp.server"] 

@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) server that provides access to Gong's API for retrieving call recordings and transcripts. This server allows Claude to interact with Gong data through a standardized interface.
 
+Built with [FastMCP](https://github.com/jlowin/fastmcp), the fast, Pythonic way to build MCP servers.
+
 ## Features
 
 - List Gong calls with optional date range filtering
@@ -11,7 +13,7 @@ A Model Context Protocol (MCP) server that provides access to Gong's API for ret
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Python 3.10 or higher
 - Docker (optional, for containerized deployment)
 - Gong API credentials (Access Key and Secret)
 
@@ -22,11 +24,12 @@ A Model Context Protocol (MCP) server that provides access to Gong's API for ret
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
-3. Build the project:
+3. Set up environment variables:
    ```bash
-   npm run build
+   cp .env.example .env
+   # Edit .env with your Gong API credentials
    ```
 
 ### Docker
@@ -36,12 +39,37 @@ Build the container:
 docker build -t gong-mcp .
 ```
 
-## Configuring Claude
+## Running the Server
+
+### Local Development
+
+Run the server directly:
+```bash
+python -m gong_mcp.server
+```
+
+Or use the FastMCP CLI:
+```bash
+fastmcp run src/gong_mcp/server.py
+```
+
+### Docker
+
+Run the container:
+```bash
+docker run -it --rm \
+  -e GONG_ACCESS_KEY=your_access_key \
+  -e GONG_ACCESS_SECRET=your_access_secret \
+  gong-mcp
+```
+
+## Configuring Claude Desktop
 
 1. Open Claude Desktop settings
 2. Navigate to the MCP Servers section
 3. Add a new server with the following configuration:
 
+**For Docker deployment:**
 ```json
 {
   "command": "docker",
@@ -58,55 +86,43 @@ docker build -t gong-mcp .
 }
 ```
 
-4. Replace the placeholder credentials with your actual Gong API credentials from your `.env` file
+**For local Python deployment:**
+```json
+{
+  "command": "python",
+  "args": [
+    "-m",
+    "gong_mcp.server"
+  ],
+  "env": {
+    "GONG_ACCESS_KEY": "your_access_key_here",
+    "GONG_ACCESS_SECRET": "your_access_secret_here"
+  }
+}
+```
+
+4. Replace the placeholder credentials with your actual Gong API credentials
 
 ## Available Tools
 
-### List Calls
+### list_calls
 
-Retrieves a list of Gong calls with optional date range filtering.
+List Gong calls with optional date range filtering.
 
-```typescript
-{
-  name: "list_calls",
-  description: "List Gong calls with optional date range filtering. Returns call details including ID, title, start/end times, participants, and duration.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      fromDateTime: {
-        type: "string",
-        description: "Start date/time in ISO format (e.g. 2024-03-01T00:00:00Z)"
-      },
-      toDateTime: {
-        type: "string",
-        description: "End date/time in ISO format (e.g. 2024-03-31T23:59:59Z)"
-      }
-    }
-  }
-}
-```
+**Parameters:**
+- `from_date_time` (optional): Start date/time in ISO format (e.g. `2024-03-01T00:00:00Z`)
+- `to_date_time` (optional): End date/time in ISO format (e.g. `2024-03-31T23:59:59Z`)
 
-### Retrieve Transcripts
+**Returns:** JSON string containing call details including ID, title, start/end times, participants, and duration.
 
-Retrieves detailed transcripts for specified call IDs.
+### retrieve_transcripts
 
-```typescript
-{
-  name: "retrieve_transcripts",
-  description: "Retrieve transcripts for specified call IDs. Returns detailed transcripts including speaker IDs, topics, and timestamped sentences.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      callIds: {
-        type: "array",
-        items: { type: "string" },
-        description: "Array of Gong call IDs to retrieve transcripts for"
-      }
-    },
-    required: ["callIds"]
-  }
-}
-```
+Retrieve transcripts for specified call IDs.
+
+**Parameters:**
+- `call_ids` (required): List of Gong call IDs to retrieve transcripts for
+
+**Returns:** JSON string containing detailed transcripts including speaker IDs, topics, and timestamped sentences.
 
 ## License
 
